@@ -1,1 +1,0 @@
-notepad .\components\MetaNavigator.js

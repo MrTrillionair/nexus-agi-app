@@ -1,0 +1,3 @@
+cd fibolang-empire
+git init
+git remote add origin https://github.com/MrTrillionair/fibolang-empire.git
