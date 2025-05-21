@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 
-// Voice Recognition API Setup
+// Setup Web Speech API
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
@@ -21,6 +21,7 @@ function MetaNavigator() {
   const [numerologyMeaning, setNumerologyMeaning] = useState('');
   const [numerologyShadow, setNumerologyShadow] = useState('');
   const [commandOutput, setCommandOutput] = useState('');
+  const [micActive, setMicActive] = useState(false);
 
   const numerologyMeanings = {
     1: { meaning: 'Initiation, leadership, self-mastery', opposite: 'Selfishness, isolation' },
@@ -34,8 +35,8 @@ function MetaNavigator() {
     9: { meaning: 'Completion, compassion, universal love', opposite: 'Loss, detachment' }
   };
 
-  // Calculate today's numerology
   useEffect(() => {
+    // Calculate today's numerology code
     const date = new Date();
     const digits = `${date.getFullYear()}${date.getMonth() + 1}${date.getDate()}`.split('').map(Number);
     let sum = digits.reduce((a, b) => a + b, 0);
@@ -47,16 +48,31 @@ function MetaNavigator() {
     setNumerologyShadow(numerologyMeanings[sum].opposite);
   }, []);
 
-  // Start voice listening
   useEffect(() => {
-    if (!recognition) return;
+    if (!recognition) {
+      console.warn('SpeechRecognition not supported');
+      return;
+    }
+
+    let isRunning = false;
 
     recognition.continuous = true;
     recognition.lang = 'en-US';
-    recognition.start();
 
-    recognition.onresult = (event) => {
-      const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
+    const startRecognition = () => {
+      try {
+        if (!isRunning) {
+          recognition.start();
+          isRunning = true;
+          setMicActive(true);
+        }
+      } catch (error) {
+        console.warn('⚠️ SpeechRecognition already started or failed:', error.message);
+      }
+    };
+
+    const handleResult = (event) => {
+      const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
       console.log('🎙 Voice Command:', command);
 
       if (command.includes('dashboard')) {
@@ -72,8 +88,24 @@ function MetaNavigator() {
       }
     };
 
+    const handleEnd = () => {
+      isRunning = false;
+      setMicActive(false);
+      setTimeout(startRecognition, 1000); // auto-restart after brief pause
+    };
+
+    recognition.onresult = handleResult;
+    recognition.onend = handleEnd;
     recognition.onerror = (event) => {
-      console.warn('Voice recognition error:', event.error);
+      console.warn('❌ Voice recognition error:', event.error);
+    };
+
+    startRecognition();
+
+    return () => {
+      recognition.stop();
+      isRunning = false;
+      setMicActive(false);
     };
   }, [numerologyCode, numerologyMeaning]);
 
@@ -84,6 +116,7 @@ function MetaNavigator() {
         <p>Numerology Code: {numerologyCode}</p>
         <p style={{ color: '#90ee90' }}>Meaning: {numerologyMeaning}</p>
         <p style={{ color: '#ff8888' }}>Opposite: {numerologyShadow}</p>
+        <p>🎙 Mic: {micActive ? 'Active' : 'Off'}</p>
 
         {commandOutput && (
           <div style={{ marginTop: '20px', padding: '12px', backgroundColor: '#111', borderRadius: '8px' }}>
@@ -120,7 +153,7 @@ function MetaNavigator() {
           <meshStandardMaterial color="#8000ff" emissive="#4500ff" emissiveIntensity={0.8} />
         </mesh>
 
-        {/* Ritual Spiral - Homopolar Symbol */}
+        {/* Ritual Spiral Symbol */}
         <mesh position={[0, 1.2, -1]}>
           <torusGeometry args={[0.2, 0.02, 16, 100]} />
           <meshStandardMaterial color="#FFA500" emissive="#FF8C00" emissiveIntensity={0.5} />
