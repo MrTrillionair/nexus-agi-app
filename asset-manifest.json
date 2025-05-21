@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/nexus-agi-app/static/js/main.9bba0faf.js",
+    "index.html": "/nexus-agi-app/index.html",
+    "main.9bba0faf.js.map": "/nexus-agi-app/static/js/main.9bba0faf.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.9bba0faf.js"
+  ]
+}
